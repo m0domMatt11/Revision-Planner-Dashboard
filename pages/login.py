@@ -28,7 +28,7 @@ layout = html.Div([
 
 @callback(
     Output("url", "pathname"),
-    Output("User ID", "data"),
+    Output("user-id", "data"),
     Output("login-message", "children"),
     Input("submit-button", "n_clicks"),
     State("Login-dropdown", "value"),

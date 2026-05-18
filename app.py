@@ -7,9 +7,9 @@ from database import initialise_db
 
 app = Dash(__name__, use_pages=True)
 app.layout = html.Div([
-    dcc.store(id='user-id', storage_type='session'),
-    dcc.store(id="Start-Time", storage_type='session'),
-    dcc.store(id="End-Time", storage_type='session'),
+    dcc.Store(id='user-id', storage_type='session'),
+    dcc.Store(id="Start-Time", storage_type='session'),
+    dcc.Store(id="End-Time", storage_type='session'),
     dcc.Location(id="url", refresh=True),
     html.H1("Revision Planner"),
     dash.page_container

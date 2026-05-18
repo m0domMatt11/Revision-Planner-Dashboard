@@ -64,16 +64,19 @@ Log_Message = html.P(id="log-message")
     Input("log-button", "n_clicks"),
     State("subject-dropdown", "value"),
     State("user-id", "data"),
+    State("Start-Time", "data"),
+    State("End-Time", "data"),
+    prevent_initial_call=True
 )
-def handle_logging(n_clicks, subject, user_id):
+def handle_logging(n_clicks, subject, user_id, start_time_var, end_time_var):
     if n_clicks % 2 == 1:  # Start logging on odd clicks
         if subject is None:
             return "Please select a subject to log.", dash.no_update, dash.no_update
         start_time = pd.Timestamp.now().isoformat()
-        return f"Logging started for {subject} at {start_time}. Click the button again to stop logging.", start_time, dash.no_update
+        return f"Logging started for {subject} at {start_time}. Click the button again to stop logging.", {"start_time": start_time}, dash.no_update
     else:  # Stop logging on even clicks
         end_time = pd.Timestamp.now().isoformat()
-        start_time = dash.callback_context.states["Start-Time.data"]
+        start_time = start_time_var.get("start_time") if start_time_var else None
         if start_time is None:
             return "Logging was not started. Please click the button to start logging.", dash.no_update, dash.no_update
         duration = (pd.Timestamp(end_time) - pd.Timestamp(start_time)).total_seconds() // 60  # Duration in minutes
@@ -82,7 +85,7 @@ def handle_logging(n_clicks, subject, user_id):
         cursor.execute("INSERT INTO Log (user_id, subject, date, duration) VALUES (?, ?, ?, ?)", (user_id, subject, start_time, duration))
         conn.commit()
         conn.close()
-        return f"Logging stopped for {subject} at {end_time}. Duration: {duration} minutes.", dash.no_update, end_time
+        return f"Logging stopped for {subject} at {end_time}. Duration: {duration} minutes.", dash.no_update, {"end_time": end_time}
 
 
 
@@ -99,3 +102,6 @@ tabs = dbc.Tabs([
     dbc.Tab([], label="Deeper Analysis", tab_id="tab-3"),
     dbc.Tab([], label="Settings", tab_id="tab-4")
 ], id = "home-tabs", active_tab="tab-1")
+
+layout = html.Div([tabs, 
+                   html.Div(id="home-content")], className="home-page")
