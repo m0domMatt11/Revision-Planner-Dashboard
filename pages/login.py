@@ -4,7 +4,7 @@ import dash
 import plotly.express as px
 import pandas as pd
 import sqlite3 as sql
-from database import initialise_db, add_user
+from database import initialise_db, add_user, fetch_user_id
 
 dash.register_page(__name__, path='/')
 
@@ -28,6 +28,7 @@ layout = html.Div([
 
 @callback(
     Output("url", "pathname"),
+    Output("User ID", "data"),
     Output("login-message", "children"),
     Input("submit-button", "n_clicks"),
     State("Login-dropdown", "value"),
@@ -38,14 +39,15 @@ layout = html.Div([
 def handle_login(n_clicks, login_type, username, password):
     # Check for missing inputs before database queries
     if not login_type or not username or not password:
-        return dash.no_update, "Please fill in all fields."
+        return dash.no_update, dash.no_update, "Please fill in all fields."
     
     if login_type == "Sign Up":
         message = add_user(username, password)
         if message == "User added successfully":
-            return "/home", ""
+            user_id = fetch_user_id(username)
+            return "/home", {"user_id": user_id}, ""
         else:
-            return dash.no_update, message
+            return dash.no_update, dash.no_update, message
     elif login_type == "Login":
         conn = sql.connect('revision_planner.db')
         cursor = conn.cursor()
@@ -53,9 +55,9 @@ def handle_login(n_clicks, login_type, username, password):
         user = cursor.fetchone()
         conn.close()
         if user:
-            return "/home", ""
+            user_id = fetch_user_id(username)
+            return "/home", {"user_id": user_id}, ""
         else:
-            return dash.no_update, "Invalid username or password. Please try again."
-    
-    return dash.no_update, dash.no_update
+            return dash.no_update, dash.no_update, "Invalid username or password. Please try again."
 
+    return dash.no_update, dash.no_update, ""

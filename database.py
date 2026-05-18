@@ -32,3 +32,11 @@ def add_user(username, password):
         return "Username already exists"
     finally:
         conn.close()
+
+def fetch_user_id(username):
+    conn = sql.connect('revision_planner.db')
+    c = conn.cursor()
+    c.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    user_id = c.fetchone()
+    conn.close()
+    return user_id[0] if user_id else None
