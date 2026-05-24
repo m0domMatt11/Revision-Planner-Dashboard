@@ -5,7 +5,7 @@ import plotly.express as px
 import pandas as pd
 from database import initialise_db
 
-app = Dash(__name__, use_pages=True)
+app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = html.Div([
     dcc.Store(id='user-id', storage_type='session'),
     dcc.Store(id="Start-Time", storage_type='session'),

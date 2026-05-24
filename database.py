@@ -40,3 +40,19 @@ def fetch_user_id(username):
     user_id = c.fetchone()
     conn.close()
     return user_id[0] if user_id else None
+
+def delete_user(user_id):
+    conn = sql.connect('revision_planner.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+    c.execute("DELETE FROM Log WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+def reset_user_data(user_id):
+    conn = sql.connect('revision_planner.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM Log WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
