@@ -9,21 +9,27 @@ from database import initialise_db, add_user, fetch_user_id
 dash.register_page(__name__, path='/')
 
 layout = html.Div([
-    html.H1("Welcome to the Revision Planner Dashboard!"),
-    html.P("Please log in to access your revision plans and track your progress."),
+    dbc.Card([
+        dbc.CardBody([
+    html.H1("Revision Planner", className="login-title"),
+    html.P("Please log in to access your revision plans and track your progress.", className="subtitle"),
     dcc.Dropdown(
         id="Login-dropdown",
         options = [
             {"label": "Login", "value": "Login"},
             {"label": "Sign Up", "value": "Sign Up"}
         ],
-        multi=False
+        multi=False,
+        className="login-dropdown",
+        placeholder="Select Login or Sign Up"
     ),
-    dbc.Input(id="username", placeholder="Enter your username", type="text"),
-    dbc.Input(id="password", placeholder="Enter your password", type="password"),
-    html.Button("Submit", id="submit-button", n_clicks=0),
-    html.P(id="login-message")
+    dbc.Input(id="username", placeholder="Enter your username", type="text", className="login-input"),
+    dbc.Input(id="password", placeholder="Enter your password", type="password", className="login-input"),
+    dbc.Button("Submit", id="submit-button", n_clicks=0, className="login-button"),
+    html.P(id="login-message", className="login-message")
 
+])
+    ], className="login-card")
 ], className="login-page")
 
 @callback(

@@ -1,3 +1,128 @@
+/* Genaral Styles */
+
+body{
+    background-color: #ADFCFF;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+h1{
+    font-size: 42px;
+    font-weight: 700;
+    color: #111827
+}
+
+.subtitle {
+    color: #6b7280;
+    font-size: 18px;
+}
+
+/* Login Page Styles */
+
+.login-page{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(to bottom right, #f8fafc, #eef2ff);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.form-group{
+    margin-bottom: 20px;
+}
+
+.login-card {
+    width: 520px;
+    max-width: 90%;
+    background: white;
+    padding: 48px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.login-card:hover{
+    transform: translateY(-2px);
+}
+
+.login-title{
+    font-family: "Inter", sans-serif;
+    text-align: center;
+    font-size: 48px;
+    letter-spacing: 3px;
+    color: #3f3f46;
+    margin-bottom: 20px;
+}
+
+
+.login-dropdown {
+    width: 100%;
+    margin-bottom: 20px;
+    
+}
+
+.login-dropdown:focus {
+    border-color: #565656;
+    outline: none;
+}
+
+.login-input{
+    flex: 0, 0, 100px;
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.login-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+    outline: none;
+    transform: translateY(-1px);
+    
+}
+
+.login-button{
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.login-button:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.login-message{
+    margin-top: 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #ef4444;
+}
+
+
+
+
+/*Tabs for home page*/
+
 .tab-content > .tab-pane {
      display: none;
  }
@@ -5,3 +130,94 @@
  .tab-content > .tab-pane.active {
      display: block;
  }
+
+ /* Home Page Styles */
+
+ .home-page{
+    min-height: 100vh;
+    background: #f5f7fb;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.row{
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.dashboard-container{
+    max-width: 1400px;
+    margin: auto;
+}
+
+.dashboard-title{
+    font-size: 36px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 5px;
+    letter-spacing: -1px;
+}
+
+.dashboard-subtitle{
+    color: #6b7280;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.dashboard-card{
+    border: none !important;
+    border-radius: 24px !important;
+    background: white;
+    box-shadow:
+        0 4px 6px rgba(0,0,0,0.02),
+        0 10px 30px rgba(0,0,0,0.04);
+    padding: 10px;
+    transition: 0.2s ease;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.dashboard-card:hover{
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 12px rgba(0,0,0,0.04),
+        0 16px 40px rgba(0,0,0,0.06);
+}
+
+button{
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+button:hover{
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.Select-control{
+    border-radius: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    min-height: 50px !important;
+    box-shadow: none !important;
+}
+
+.Select-placeholder{
+    line-height: 48px !important;
+}
+
+.Select-value-label{
+    line-height: 48px !important;
+}
+
+.home-tab-content,
+.log-tab-content,
+.analysis-tab-content,
+.settings-tab-content{
+    margin-top: 20px;
+}

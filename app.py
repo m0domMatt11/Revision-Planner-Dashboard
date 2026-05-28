@@ -5,13 +5,12 @@ import plotly.express as px
 import pandas as pd
 from database import initialise_db
 
-app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX])
 app.layout = html.Div([
     dcc.Store(id='user-id', storage_type='session'),
     dcc.Store(id="Start-Time", storage_type='session'),
     dcc.Store(id="End-Time", storage_type='session'),
     dcc.Location(id="url", refresh=True),
-    html.H1("Revision Planner"),
     dash.page_container
 ])
 
