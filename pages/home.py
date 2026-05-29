@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 import sqlite3 as sql
-from database import initialise_db, add_user, fetch_user_id, delete_user, reset_user_data
+from database import  delete_user, reset_user_data, fetch_pie_chart_data, add_log, fetch_weekly_data
 import plotly.graph_objects as go
 from datetime import date
 import datetime as dt
@@ -55,11 +55,7 @@ updateButton = html.Button("Update Chart", id="update-chart-button", n_clicks=0)
 def update_pie_chart(n_clicks, user_id):
     user_id = user_id.get("user_id", None) if user_id else None
     if n_clicks > 0 and user_id is not None:
-        conn = sql.connect('revision_planner.db')
-        cursor = conn.cursor()
-        query = "SELECT subject, SUM(duration) as total_duration FROM Log WHERE user_id = ? GROUP BY subject"
-        df = pd.read_sql_query(query, conn, params=(user_id,))  # Using the user_id from the state
-        conn.close()
+        df = fetch_pie_chart_data(user_id)
         if df.empty:
             fig = px.pie(values=[1], names=["No data"], title="Revision Time Distribution")
             fig = style_figure(fig)
@@ -131,11 +127,7 @@ def handle_logging(n_clicks, subject, user_id, start_time_var, end_time_var):
         start_time = str(start_time)  # Convert start_time to string for database storage
         user_id = str(user_id)  # Convert user_id to string for database storage
         subject = str(subject)  # Convert subject to string for database storage
-        conn = sql.connect('revision_planner.db')
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO Log (user_id, subject, date, duration) VALUES (?, ?, ?, ?)", (user_id, subject, start_time, duration))
-        conn.commit()
-        conn.close()
+        add_log(user_id, subject, start_time, duration)
         readable_end_time = str(pd.to_datetime(end_time).strftime('%d %B, %I:%M %p')) 
         return "Start Logging", f"Logging stopped for {subject} at {readable_end_time}. Duration: {duration} minutes.", dash.no_update, {"end_time": end_time}
 
@@ -154,13 +146,7 @@ def update_weekly_graph(n_clicks, user_id):
     user_id = user_id.get("user_id", None) if user_id else None
     
     if n_clicks > 0 and user_id is not None:
-        conn = sql.connect('revision_planner.db')
-        
-        # 1. Fetch raw daily data from SQLite
-        query = "SELECT date, subject, duration FROM Log WHERE user_id = ?"
-        df = pd.read_sql_query(query, conn, params=(user_id,))
-        conn.close()
-        
+        df = fetch_weekly_data(user_id)
         if df.empty:
             fig = px.bar(title="Weekly Revision Time")
             fig = style_figure(fig)

@@ -4,7 +4,7 @@ import dash
 import plotly.express as px
 import pandas as pd
 import sqlite3 as sql
-from database import initialise_db, add_user, fetch_user_id
+from database import initialise_db, add_user, fetch_user_id, fetch_user_data
 
 dash.register_page(__name__, path='/')
 
@@ -55,11 +55,7 @@ def handle_login(n_clicks, login_type, username, password):
         else:
             return dash.no_update, dash.no_update, message
     elif login_type == "Login":
-        conn = sql.connect('revision_planner.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-        user = cursor.fetchone()
-        conn.close()
+        user = fetch_user_data(username, password)
         if user:
             user_id = fetch_user_id(username)
             return "/home", {"user_id": user_id}, ""
