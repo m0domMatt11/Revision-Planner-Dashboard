@@ -11,7 +11,7 @@ dash.register_page(__name__, path='/')
 layout = html.Div([
     dbc.Card([
         dbc.CardBody([
-    html.H1("Revision Planner", className="login-title"),
+    html.H1("Revision Tracker", className="login-title"),
     html.P("Please log in to access your revision plans and track your progress.", className="subtitle"),
     dcc.Dropdown(
         id="Login-dropdown",
@@ -26,7 +26,7 @@ layout = html.Div([
     dbc.Input(id="username", placeholder="Enter your username", type="text", className="login-input"),
     dbc.Input(id="password", placeholder="Enter your password", type="password", className="login-input"),
     dbc.Button("Submit", id="submit-button", n_clicks=0, className="login-button"),
-    html.P(id="login-message", className="login-message")
+    html.P(id="login-message", className="Confirmation-message")
 
 ])
     ], className="login-card")

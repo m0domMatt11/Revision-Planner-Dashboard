@@ -10,6 +10,7 @@ app.layout = html.Div([
     dcc.Store(id='user-id', storage_type='session'),
     dcc.Store(id="Start-Time", storage_type='session'),
     dcc.Store(id="End-Time", storage_type='session'),
+    dcc.Store(id="Exam-Date", storage_type='local'),
     dcc.Location(id="url", refresh=True),
     dash.page_container
 ])

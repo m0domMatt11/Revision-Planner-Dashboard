@@ -111,7 +111,7 @@ h1{
     transform: translateY(-1px);
 }
 
-.login-message{
+.Confirmation-message{
     margin-top: 16px;
     font-size: 15px;
     font-weight: 500;
@@ -220,4 +220,36 @@ button:hover{
 .analysis-tab-content,
 .settings-tab-content{
     margin-top: 20px;
+}
+
+
+.Confirmation-Checkbox {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #374151;
+    transition: 0.2s ease;
+}
+
+.Confirmation-Checkbox:hover {
+    border-color: #6366f1;
+    background: #eef2ff;
+}
+
+.Confirmation-Checkbox input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+    accent-color: #4f46e5;
+    cursor: pointer;
+}
+
+.Confirmation-Checkbox label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
