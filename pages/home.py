@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 import sqlite3 as sql
-from database import  delete_user, reset_user_data, fetch_pie_chart_data, add_log, fetch_weekly_data
+from database import delete_user, reset_user_data, fetch_pie_chart_data, add_log, fetch_weekly_data, fetch_exam_dates, add_or_update_exam_date
 import plotly.graph_objects as go
 from datetime import date
 import datetime as dt
@@ -40,21 +40,20 @@ def style_figure(fig):
 
 
 # Define the components for the home tab
-markdown = dcc.Markdown(""" Welcome to your personal revision tracking dashboard! 
-                        Here you can track your revision progress, log your study sessions, and analyze your performance over time. 
-                        Use the tabs above to navigate through different sections of the dashboard. Happy revising! """, className="home-markdown")
+markdown1 = dcc.Markdown(""" Welcome to your personal revision tracking dashboard!""", className="home-markdown")
+markdown2 = dcc.Markdown("""Here you can track your revision progress, log your study sessions, and analyze your performance over time.""", className="home-markdown")
+markdown3 = dcc.Markdown("""Use the tabs above to navigate through different sections of the dashboard. Happy revising! """, className="home-markdown")
 pieChart = dcc.Graph(id="home-pie-chart", style={"height": "300px"})
-updateButton = html.Button("Update Chart", id="update-chart-button", n_clicks=0)
 
 @callback(
     Output("home-pie-chart", "figure"),
-    Input("update-chart-button", "n_clicks"),
-    State("user-id", "data"),
-    prevent_initial_call=True
+    Input("user-id", "data"),
+    Input("log-update", "data"),
+    prevent_initial_call=False
 )
-def update_pie_chart(n_clicks, user_id):
+def update_pie_chart(user_id, log_update):
     user_id = user_id.get("user_id", None) if user_id else None
-    if n_clicks > 0 and user_id is not None:
+    if user_id is not None:
         df = fetch_pie_chart_data(user_id)
         if df.empty:
             fig = px.pie(values=[1], names=["No data"], title="Revision Time Distribution")
@@ -102,6 +101,7 @@ Log_Message = html.P(id="log-message")
     Output("log-message", "children"),
     Output("Start-Time", "data"),
     Output("End-Time", "data"),
+    Output("log-update", "data"),
     Input("log-button", "n_clicks"),
     State("subject-dropdown", "value"),
     State("user-id", "data"),
@@ -112,16 +112,16 @@ Log_Message = html.P(id="log-message")
 def handle_logging(n_clicks, subject, user_id, start_time_var, end_time_var):
     if n_clicks % 2 == 1:  # Start logging on odd clicks
         if subject is None:
-            return dash.no_update, "Please select a subject to log.", dash.no_update, dash.no_update
+            return dash.no_update, "Please select a subject to log.", dash.no_update, dash.no_update, dash.no_update
         start_time = pd.Timestamp.now().isoformat()
         readable_start_time = str(pd.to_datetime(start_time).strftime('%d %B, %I:%M %p'))
-        return "Stop Logging", f"Logging started for {subject} at {readable_start_time}. Click the button again to stop logging.", {"start_time": start_time}, dash.no_update
+        return "Stop Logging", f"Logging started for {subject} at {readable_start_time}. Click the button again to stop logging.", {"start_time": start_time}, dash.no_update, dash.no_update
     else:  # Stop logging on even clicks
         end_time = pd.Timestamp.now().isoformat()
         start_time = pd.Timestamp(start_time_var.get("start_time", None)) if start_time_var else None
         user_id = user_id.get("user_id", None) if user_id else None
         if start_time is None:
-            return dash.no_update, "Logging was not started. Please click the button to start logging.", dash.no_update, dash.no_update
+            return dash.no_update, "Logging was not started. Please click the button to start logging.", dash.no_update, dash.no_update, dash.no_update
         duration = (pd.Timestamp(end_time) - pd.Timestamp(start_time)).total_seconds() // 60  # Duration in minutes
         duration = str(int(duration))  # Convert duration to string for database storage
         start_time = str(start_time)  # Convert start_time to string for database storage
@@ -129,23 +129,23 @@ def handle_logging(n_clicks, subject, user_id, start_time_var, end_time_var):
         subject = str(subject)  # Convert subject to string for database storage
         add_log(user_id, subject, start_time, duration)
         readable_end_time = str(pd.to_datetime(end_time).strftime('%d %B, %I:%M %p')) 
-        return "Start Logging", f"Logging stopped for {subject} at {readable_end_time}. Duration: {duration} minutes.", dash.no_update, {"end_time": end_time}
+        return "Start Logging", f"Logging stopped for {subject} at {readable_end_time}. Duration: {duration} minutes.", dash.no_update, {"end_time": end_time}, pd.Timestamp.now().isoformat()
 
 # Define the components for the deeper analysis
 Graph_Of_Weekely_Revision = dcc.Graph(id="weekly-revision-graph", style={"height": "300px"})
-Update_Weekly_Graph_Button = html.Button("Update Weekly Graph", id="update-weekly-graph-button", n_clicks=0)
+Table_Of_Total_Times = html.Div(dash.dash_table.DataTable(id="total-revision", page_size=10), className="revision-table")
 
 
 @callback(
     Output("weekly-revision-graph", "figure"),
-    Input("update-weekly-graph-button", "n_clicks"),
-    State("user-id", "data"),
-    prevent_initial_call=True
+    Input("user-id", "data"),
+    Input("log-update", "data"),
+    prevent_initial_call=False
 )
-def update_weekly_graph(n_clicks, user_id):
+def update_weekly_graph(user_id, log_update):
     user_id = user_id.get("user_id", None) if user_id else None
     
-    if n_clicks > 0 and user_id is not None:
+    if user_id is not None:
         df = fetch_weekly_data(user_id)
         if df.empty:
             fig = px.bar(title="Weekly Revision Time")
@@ -155,12 +155,20 @@ def update_weekly_graph(n_clicks, user_id):
         # 2. Convert to datetime object
         df['date'] = pd.to_datetime(df['date'])
         df["duration"] = pd.to_numeric(df["duration"])
-        subjects = df['subject'].unique()
 
         # 3. Group by week and subject, summing durations for stacked bar chart
         df['week'] = df['date'].dt.to_period('W').apply(lambda r: r.start_time)
-        weekly_data = df.groupby(['week', 'subject'])['duration'].sum().reset_index()
-        fig = px.bar(weekly_data, x='week', y='duration', color='subject', title="Weekly Revision Time", labels={"duration": "Minutes Revised", "week": "Week"}, barmode='stack')
+        df['week_end'] = df['week'] + pd.Timedelta(days=6)
+        df['week_label'] = (
+            df['week'].dt.strftime('%d %b')
+            + ' - '
+            + df['week_end'].dt.strftime('%d %b')
+            )
+        weekly_data = df.groupby(['week', 'week_label','subject'])['duration'].sum().reset_index()
+        weekly_data = weekly_data.sort_values('week')
+        fig = px.bar(weekly_data, x='week_label', y='duration', color='subject', title="Weekly Revision Time", labels={"duration": "Minutes Revised", "week_label": "Week"}, barmode='stack',     category_orders={
+        "week_label": weekly_data['week_label'].drop_duplicates().tolist()
+    })
   
         # Furher styling for better readability
         fig.update_xaxes(title="Week")
@@ -170,9 +178,26 @@ def update_weekly_graph(n_clicks, user_id):
 
         return fig
     else:
-        fig = px.line(title="Weekly Revision Time")
+        fig = px.bar(title="Weekly Revision Time")
         fig = style_figure(fig)
         return fig
+    
+
+@callback(
+    Output("total-revision", "data"),
+    Output("total-revision", "columns"),
+    Input("log-update", "data"),
+    Input("user-id", "data"),
+    prevent_initial_call=False
+)
+def update_table(log_update, user_id):
+    user_id = user_id.get("user_id", None) if user_id else None
+    if user_id is not None:
+        df = fetch_pie_chart_data(user_id)
+        columns = [{"name": i, "id": i} for i in df.columns]
+        return df.to_dict("records"), columns
+    else:
+        return dash.no_update, dash.no_update
     
 
 # Define components for the days left to exam analysis
@@ -192,75 +217,80 @@ Date_Picker = dcc.DatePickerSingle(
 confirm_button = html.Button("Confirm Exam Date", id="confirm-exam-date-button", n_clicks=0)
 comfirmation_message = html.P(id="exam-date-confirmation-message", className="Confirmation-message")
 days_left_bar = dcc.Graph(id="days-left-bar", style={"height": "300px"})
-update_chart_button = html.Button("Update Days Left Chart", id="update-days-left-chart-button", n_clicks=0)
 
 @callback(
-    Output("Exam-Date", "data"),
-    Output("subject-dropdown-analysis", "value"),
-    Output("exam-date-picker", "date"),
     Output("exam-date-confirmation-message", "children"),
+    Output("exam-date-refresh", "data"),
     Input("confirm-exam-date-button", "n_clicks"),
     State("subject-dropdown-analysis", "value"),
     State("exam-date-picker", "date"),
-    State("Exam-Date", "data"),
+    State("user-id", "data"),
     prevent_initial_call=True
 )
-def update_days_left_store(n_clicks, subject, exam_date, exam_date_store):
-    if n_clicks > 0 and subject and exam_date:
-        if exam_date_store is None:
-            exam_date_store = []
-        elif isinstance(exam_date_store, dict):
-            exam_date_store = [exam_date_store]
-        # Replace existing subject entry if it already exists, otherwise append
-        updated = False
-        for item in exam_date_store:
-            if item.get("subject") == subject:
-                item["exam_date"] = exam_date
-                updated = True
-                break
-        if not updated:
-            exam_date_store.append({"subject": subject, "exam_date": exam_date})
-        return exam_date_store, None, None, "Exam date confirmed!"
-    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
+def save_exam_date(n_clicks, subject, exam_date, user_id):
+    user_id = user_id.get("user_id", None) if user_id else None
+    if n_clicks > 0:
+        if user_id is None:
+            return "Please log in to save exam dates.", dash.no_update
+        if not subject or not exam_date:
+            return "Please select a subject and exam date.", dash.no_update
+        add_or_update_exam_date(user_id, subject, exam_date)
+        return "Exam date confirmed!", pd.Timestamp.now().isoformat()
+    return dash.no_update, dash.no_update
 
 
 @callback(
     Output("days-left-bar", "figure"),
-    Input("update-days-left-chart-button", "n_clicks"),
-    State("Exam-Date", "data"),
-    prevent_initial_call=True
+    Input("user-id", "data"),
+    Input("exam-date-refresh", "data"),
+    prevent_initial_call=False
 )
-def update_days_left_chart(n_clicks, exam_date_store):
-    if n_clicks > 0 and exam_date_store:
-        if isinstance(exam_date_store, dict):
-            exam_date_store = [exam_date_store]
-        subjects = [] 
-        days_left = []
-        for item in exam_date_store:
-            subject = item.get("subject")
-            exam_date = item.get("exam_date")
-            num = (pd.to_datetime(exam_date) - pd.Timestamp.now()).days
-            if subject and exam_date and num > 0:
-                subjects.append(subject)
-                days_left.append(abs(num))
-            else:
-                pass
-        if not subjects:
-            return dash.no_update
-        df = pd.DataFrame({"Subject": subjects, "Days Left": days_left})
-        fig = px.bar(df, x="Subject", y="Days Left", title="Days Left Until Exam")
-        fig.update_xaxes(title="Subject")
-        fig.update_yaxes(title="Days Left")
-        fig = style_figure(fig)
-        return fig
+def update_days_left_chart(user_id, refresh_trigger):
+    user_id = user_id.get("user_id", None) if user_id else None
+    if user_id is not None:
+        df = fetch_exam_dates(user_id)
+        if not df.empty:
+            df["exam_date"] = pd.to_datetime(df["exam_date"])
+            now = pd.Timestamp.now().normalize()
+            future_df = df[df["exam_date"] >= now].copy()
+            if not future_df.empty:
+                future_df["Days Left"] = (future_df["exam_date"] - now).dt.days
+                df_chart = future_df[["subject", "Days Left"]].rename(columns={"subject": "Subject"})
+                fig = px.bar(df_chart, x="Subject", y="Days Left", title="Days Left Until Exam")
+                fig.update_xaxes(title="Subject")
+                fig.update_yaxes(title="Days Left")
+                fig = style_figure(fig)
+                return fig
     fig = px.bar(title="Days Left Until Exam")
     fig = style_figure(fig)
     return fig
-    
 
+
+@callback(
+    Output("subject-dropdown-analysis", "value"),
+    Output("exam-date-picker", "date"),
+    Input("user-id", "data"),
+    prevent_initial_call=False
+)
+def restore_exam_date_fields(user_id):
+    user_id = user_id.get("user_id", None) if user_id else None
+    if user_id is not None:
+        df = fetch_exam_dates(user_id)
+        if not df.empty:
+            df["exam_date"] = pd.to_datetime(df["exam_date"])
+            now = pd.Timestamp.now().normalize()
+            future_df = df[df["exam_date"] >= now].copy()
+            if not future_df.empty:
+                nearest = future_df.sort_values("exam_date").iloc[0]
+                return nearest["subject"], str(nearest["exam_date"].date())
+    return None, None
+    
 # Define the components for the settings tab
 
-markdownSettings = dcc.Markdown(""" In the settings tab, you can manage your account and data. Use the buttons below to delete your account or reset your revision data. Please note that these actions are irreversible, so proceed with caution. """, className="settings-markdown")
+markdownSettings1 = dcc.Markdown(""" In the settings tab, you can manage your account and data.""", className="settings-markdown")
+markdownSettings2 = dcc.Markdown("""Use the buttons below to delete your account or reset your revision data.""", className="settings-markdown")
+markdownSettings3 = dcc.Markdown("""Please note that these actions are irreversible, so proceed with caution.""", className="settings-markdowm")
+
 delete_account_button = html.Button("Delete Account", id="delete-account-button", n_clicks=0)
 reset_data_button = html.Button("Reset Data", id="reset-data-button", n_clicks=0)
 checkbox = dcc.Checklist(id = "confirmation-check", options=[{"label": "Confirm Action", "value": 1 }], className="Confirmation-Checkbox")
@@ -269,7 +299,6 @@ message = html.P(id="settings-message", className="Confirmation-message")
 @callback(
     Output("url", "pathname", allow_duplicate=True),
     Output("settings-message", "children", allow_duplicate=True),
-    Output("Exam-Date", "clear_data", allow_duplicate=True),
     Input("delete-account-button", "n_clicks"),
     Input("confirmation-check", "value"),
     State("user-id", "data"),
@@ -282,16 +311,18 @@ def delete_account(n_clicks,checkbox_value, user_id):
             user_id = user_id.get("user_id", None) if user_id else None
             if user_id is not None:
                 delete_user(user_id)
-                return "/", "Account deleted successfully. Please refresh the page to log in again.", True
+                return "/", "Account deleted successfully. Please refresh the page to log in again."
             else:
-                return dash.no_update, "User ID not found. Unable to delete account.", False
+                return dash.no_update, "User ID not found. Unable to delete account."
         else:
-            return dash.no_update, "Please confirm that you want to complete this action.", False
-    return dash.no_update, dash.no_update, False
+            return dash.no_update, "Please confirm that you want to complete this action."
+    return dash.no_update, dash.no_update
 
 @callback(
     Output("settings-message", "children", allow_duplicate=True),
-    Output("Exam-Date", "clear_data", allow_duplicate=True),
+    Output("subject-dropdown-analysis", "value"),
+    Output("exam-date-picker", "date"),
+    Output("days-left-bar", "figure"),
     Input("reset-data-button", "n_clicks"),
     Input("confirmation-check", "value"),
     State("user-id", "data"),
@@ -304,12 +335,14 @@ def reset_data(n_clicks, checkbox_value, user_id):
             user_id = user_id.get("user_id", None) if user_id else None
             if user_id is not None:
                 reset_user_data(user_id)
-                return "Data reset successfully. All your revision logs have been deleted.", True
+                fig = px.bar(title="Days Left Until Exam")
+                fig = style_figure(fig)
+                return "Data reset successfully. All your revision logs and exam dates have been deleted.", None, None, fig
             else:
-                return "User ID not found. Unable to reset data.", False
+                return "User ID not found. Unable to reset data.", dash.no_update, dash.no_update, dash.no_update
         else:
-            return "Please confirm that you want to complete this action", False
-    return dash.no_update, False
+            return "Please confirm that you want to complete this action", dash.no_update, dash.no_update, dash.no_update
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update
 
 
 
@@ -323,14 +356,14 @@ home_tab = dbc.Tab(
             [
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([markdown]),
+                        dbc.CardBody([markdown1, html.Br(), markdown2, html.Br(), markdown3]),
                         className="dashboard-card",
                     ),
                     xs=12, lg=3,
                 ),
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([pieChart, updateButton]),
+                        dbc.CardBody([pieChart]),
                         className="dashboard-card",
                     ),
                     xs=12, lg=9,
@@ -373,7 +406,19 @@ Analysis_Tab = dbc.Tab(
             [
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([Graph_Of_Weekely_Revision, Update_Weekly_Graph_Button]),
+                        dbc.CardBody([Graph_Of_Weekely_Revision]),
+                        className="dashboard-card",
+                    ),
+                    xs=12, lg=12,
+                )
+            ],
+            className="analysis-tab-content",
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody([Table_Of_Total_Times]),
                         className="dashboard-card",
                     ),
                     xs=12, lg=12,
@@ -399,7 +444,7 @@ exam_date_tab = dbc.Tab(
                 ),
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([days_left_bar, html.Br(), update_chart_button]),
+                        dbc.CardBody([days_left_bar]),
                         className="dashboard-card",
                     ),
                     xs=12, lg=8,
@@ -411,14 +456,6 @@ exam_date_tab = dbc.Tab(
 )
 
 
-
-
-
-
-
-
-
-
 Settings_Tab = dbc.Tab(
     label="Settings",
     tab_id="tab-5",
@@ -427,7 +464,7 @@ Settings_Tab = dbc.Tab(
             [
                 dbc.Col(
                     dbc.Card(
-                        dbc.CardBody([markdownSettings]),
+                        dbc.CardBody([markdownSettings1, html.Br(), markdownSettings2, html.Br(), markdownSettings3]),
                         className="dashboard-card",
                     ),
                     xs=12, lg=3,

@@ -218,6 +218,7 @@ button:hover{
 .home-tab-content,
 .log-tab-content,
 .analysis-tab-content,
+.exam-date-tab-content,
 .settings-tab-content{
     margin-top: 20px;
 }
@@ -252,4 +253,57 @@ button:hover{
     display: flex;
     align-items: center;
     cursor: pointer;
+}
+
+/* Revision Table */
+
+.revision-table{
+    width: 100%;
+}
+
+/* Table container */
+.dash-table-container{
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* Header */
+.dash-header{
+    background-color: #f8fafc !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+/* Cells */
+.dash-cell{
+    background-color: white !important;
+    color: #374151 !important;
+    border: none !important;
+    padding: 14px !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* Alternate rows */
+.dash-spreadsheet tr:nth-child(even) td{
+    background-color: #f9fafb !important;
+}
+
+/* Hover effect */
+.dash-spreadsheet tr:hover td{
+    background-color: #eef2ff !important;
+    transition: 0.2s ease;
+}
+
+/* Pagination */
+.previous-next-container button{
+    background: #4f46e5 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: none !important;
+    padding: 6px 12px !important;
+}
+
+.previous-next-container button:hover{
+    background: #4338ca !important;
 }

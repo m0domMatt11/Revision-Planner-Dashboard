@@ -1,9 +1,10 @@
 import os
 import sqlite3 as sql
 import pandas as pd
+import sys
 
-if getattr(__import__('sys'), 'frozen', False) and hasattr(__import__('sys'), '_MEIPASS'):
-    BASE_DIR = __import__('sys')._MEIPASS
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,6 +31,12 @@ def initialise_db():
                     date TEXT,
                     duration INTEGER,
                     FOREIGN KEY(user_id) REFERENCES users(user_id))''')
+        c.execute('''CREATE TABLE IF NOT EXISTS ExamDates
+                    (user_id INTEGER,
+                    subject TEXT,
+                    exam_date TEXT,
+                    PRIMARY KEY(user_id, subject),
+                    FOREIGN KEY(user_id) REFERENCES users(user_id))''')
         conn.commit()
 
 def add_user(username, password):
@@ -54,6 +61,7 @@ def delete_user(user_id):
         c = conn.cursor()
         c.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         c.execute("DELETE FROM Log WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM ExamDates WHERE user_id = ?", (user_id,))
         conn.commit()
         
 
@@ -61,7 +69,25 @@ def reset_user_data(user_id):
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("DELETE FROM Log WHERE user_id = ?", (user_id,))
+        c.execute("DELETE FROM ExamDates WHERE user_id = ?", (user_id,))
         conn.commit()
+
+
+def add_or_update_exam_date(user_id, subject, exam_date):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""INSERT INTO ExamDates (user_id, subject, exam_date)
+                          VALUES (?, ?, ?)
+                          ON CONFLICT(user_id, subject) DO UPDATE SET exam_date=excluded.exam_date""",
+                       (user_id, subject, exam_date))
+        conn.commit()
+
+
+def fetch_exam_dates(user_id):
+    with get_connection() as conn:
+        query = "SELECT subject, exam_date FROM ExamDates WHERE user_id = ?"
+        df = pd.read_sql_query(query, conn, params=(user_id,))
+        return df
 
 
 def fetch_user_data(username, password):
@@ -90,3 +116,4 @@ def fetch_weekly_data(user_id):
         query = "SELECT date, subject, duration FROM Log WHERE user_id = ?"
         df = pd.read_sql_query(query, conn, params=(user_id,))
         return df
+    
