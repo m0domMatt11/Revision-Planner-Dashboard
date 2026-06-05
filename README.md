@@ -57,3 +57,8 @@ Revision-Planner-Dashboard/
 ├── README.md            # Project documentation
 ├── data/                # Directory for storing user data (JSON/SQLite)
 └── assets/              # Images, styles, or logos
+
+### Easy instillation for Windows
+
+Please contact me and I will provide the .exe file for easy use. Please place the .exe file in a "low-security" area so that the database can be written to your device.
+It is advised to pin the .exe file to taskbar so it is easily accessible
