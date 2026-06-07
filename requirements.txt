@@ -1,5 +1,3 @@
-streamlit==1.32.0
-pandas==2.2.1
-numpy==1.26.4
-plotly==5.19.0
-matplotlib==3.8.3
+version https://git-lfs.github.com/spec/v1
+oid sha256:09071489406d6e3c6c728bacd381e243b0860ac115dbeb13a6a7a3ef3f04cba8
+size 84
